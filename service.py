@@ -1,5 +1,4 @@
 from DBhelper import DBhelper
-from Rase import Rase
 from MapExecuter import MapExecuter
 import datetime
 import copy
@@ -202,7 +201,7 @@ def merge_rases_by_time(routes, rase_reader, db_helper):
 
 def move_rase_from_earlier(rase_reader, down_rase, rases_later_by_route, db_helper, m_fly_time):
     our_time = down_rase[1] + datetime.timedelta(minutes=30)
-    time_fly = datetime.timedelta(minutes=int(m_fly_time[down_rase[0]]) + 1)
+    time_fly = datetime.timedelta(minutes=int(m_fly_time[down_rase[6]]) + 1)
     time_come = our_time + time_fly
     our_rase = (our_time, time_come, time_fly, rase_reader.company, rase_reader.plane, down_rase[6])
     print("MOVE FROM EARLIER ", our_rase)
@@ -268,12 +267,50 @@ def move_rases_below_if_necessary(our_rase, route_rases_later, rase_reader, db_h
 
 
 def fiasco_handle(rase_reader, db_helper, m_fly_time):
+
     rases_later = db_helper.get_rase_later(rase_reader.city_from, rase_reader.time_away)
     rases_earlier = db_helper.get_rase_earlier(rase_reader.city_from, rase_reader.time_away)
+    our_time = datetime.datetime.strptime(rase_reader.time_away, "%Y-%m-%d %H:%M:%S")
 
     num_try = 0
     optim_routes = set()
     diff_time = []
+
+    if len(rases_later) == 0:
+        for rase in rases_earlier:
+            diff_time.append(our_time - rase[1])
+        print(diff_time[diff_time.index(max(diff_time))])
+        print("OPTIM")
+        print(rases_earlier[diff_time.index(max(diff_time))][6])
+        optim_route = rases_earlier[diff_time.index(max(diff_time))][6]
+        time_fly = datetime.timedelta(minutes=int(m_fly_time[optim_route]) + 1)
+        time_come = our_time + time_fly
+        our_company = rase_reader.company
+        our_plane = rase_reader.plane
+        our_rase = (our_time, time_come, time_fly, our_company, our_plane, optim_route)
+        print("OUR RASE")
+        print(our_rase)
+        db_helper.insert_rase_tuple(our_rase)
+        return
+
+    if len(rases_earlier) == 0:
+        for rase in rases_earlier:
+            diff_time.append(rase[1] - our_time)
+        print(diff_time[diff_time.index(max(diff_time))])
+        print("OPTIM")
+        print(rases_earlier[diff_time.index(max(diff_time))][6])
+        optim_route = rases_earlier[diff_time.index(max(diff_time))][6]
+        time_fly = datetime.timedelta(minutes=int(m_fly_time[optim_route]) + 1)
+        time_come = our_time + time_fly
+        our_company = rase_reader.company
+        our_plane = rase_reader.plane
+        our_rase = (our_time, time_come, time_fly, our_company, our_plane, optim_route)
+        print("OUR RASE")
+        print(our_rase)
+        rases_later_by_route = db_helper.get_rase_later_by_route(optim_route, rase_reader.time_away)
+        move_rases_below_if_necessary(our_rase, rases_later_by_route, rase_reader, db_helper)
+        db_helper.insert_rase_tuple(our_rase)
+        return
 
     while True:
         up_rase = rases_later[num_try]
@@ -291,32 +328,42 @@ def fiasco_handle(rase_reader, db_helper, m_fly_time):
         else:
             print("need to move next rases")
             our_time = datetime.datetime.strptime(rase_reader.time_away, "%Y-%m-%d %H:%M:%S")
-            rase_earlier = db_helper.get_rase_earlier_by_route(up_rase[6], rase_reader.time_away)[0]
-            rases_later_by_route = db_helper.get_rase_later_by_route(up_rase[6], rase_reader.time_away)
-            print("OUR TIME, RASE EARLIER")
-            print(our_time)
-            print(rase_earlier)
-            if our_time - rase_earlier[1] >= datetime.timedelta(minutes=30):
-                print("move next")
-                optim_routes.add(copy.deepcopy(rase_earlier[6]))
-                num_try += 1
-            else:
-                if num_try >= len(rases_later) - 1:
-                    if len(optim_routes) > 0:
-                        print("SELECT MOST OPTIM ROUTE")
-                        break
-                    print("move us and next")
-                    our_rase = move_rase_from_earlier(rase_reader, down_rase, rases_later_by_route, db_helper, m_fly_time)
-                    db_helper.insert_rase_tuple(our_rase)
-                    break
-                else:
-                    print("TRY ANOTHER UP RASE, NOT ", up_rase[6])
-                    print("NUM TRY ", num_try)
-                    input()
+            print(up_rase[6])
+            pre_rases = db_helper.get_rase_earlier_by_route(up_rase[6],
+                                                               rase_reader.time_away)
+            if len(pre_rases) > 0:
+                rase_earlier = pre_rases[0]
+                rases_later_by_route = db_helper.get_rase_later_by_route(up_rase[6], rase_reader.time_away)
+                print("OUR TIME, RASE EARLIER")
+                print(our_time)
+                print(rase_earlier)
+                if our_time - rase_earlier[1] >= datetime.timedelta(minutes=30):
+                    print("move next")
+                    optim_routes.add(copy.deepcopy(rase_earlier[6]))
                     num_try += 1
+                else:
+                    if num_try >= len(rases_later) - 1:
+                        if len(optim_routes) > 0:
+                            print("SELECT MOST OPTIM ROUTE")
+                            break
+                        print("move us and next")
+                        our_rase = move_rase_from_earlier(rase_reader, down_rase, rases_later_by_route, db_helper, m_fly_time)
+                        db_helper.insert_rase_tuple(our_rase)
+                        break
+                    else:
+                        print("TRY ANOTHER UP RASE, NOT ", up_rase[6])
+                        print("NUM TRY ", num_try)
+                        input()
+                        num_try += 1
+            else:
+                print("move next")
+                optim_routes.add(copy.deepcopy(up_rase[6]))
+                num_try += 1
+
     print("OPTIM ROUTES")
+    opt_rout_helper = list(optim_routes)
+    optim_routes = [r for r in fly_time if r in opt_rout_helper]
     print(optim_routes)
-    optim_routes = list(optim_routes)
     our_time = datetime.datetime.strptime(rase_reader.time_away, "%Y-%m-%d %H:%M:%S")
     for op_route in optim_routes:
         opt_rase = db_helper.get_rase_later_by_route(op_route, rase_reader.time_away)[0]

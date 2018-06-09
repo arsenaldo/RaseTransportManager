@@ -1,4 +1,4 @@
-from Rase import Rase
+
 import datetime
 from DBhelper import DBhelper
 

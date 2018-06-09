@@ -2,7 +2,6 @@ import pymysql.cursors
 import copy
 import datetime
 
-
 class DBhelper:
     def __init__(self,
                  host='localhost',
@@ -215,7 +214,7 @@ class DBhelper:
                     "where r.city_from = %s " + \
                     "and rase.time_away < %s" + \
                     "group by rase.id " + \
-                    "order by time_away DESC"
+                    "order by time_away DESC, time_fly"
             cursor.execute(sql, (city, time_away))
             result = cursor.fetchall()
             return result
@@ -229,7 +228,7 @@ class DBhelper:
                 + "join place as p2 on tr.place_to = p2.id "\
                 + "where r.id = %s "\
                 + "and rase.time_away < %s"\
-                + "group by rase.time_away DESC"
+                + "order by rase.time_away DESC, time_fly"
             cursor.execute(sql, (route, time_away))
             result = cursor.fetchall()
             return result
@@ -243,7 +242,7 @@ class DBhelper:
                 + "join place as p2 on tr.place_to = p2.id "\
                 + "where r.id = %s "\
                 + "and rase.time_away >= %s"\
-                + "group by rase.time_away"
+                + "order by rase.time_away, time_fly"
             cursor.execute(sql, (route, time_away))
             result = cursor.fetchall()
             return result
