@@ -37,7 +37,7 @@ def click_event():
         item_rase = []
         for it in my_rases[i]:
             item_rase.append(copy.deepcopy(str(it)))
-        if prev_all_rases[i][0] != my_rases[i][0] and prev_all_rases[i][1] != my_rases[i][1]:
+        if prev_all_rases[i][1] != my_rases[i][1]:
             all_rases.insert(tk.END, str(item_rase))
             all_rases.itemconfig(i, {'bg': 'yellow'})
         else:
