@@ -2,23 +2,19 @@ import tkinter as tk
 from service import *
 from DBhelper import DBhelper
 
+city_mapper = {'Moscow, Sheremetievo': 'Sheremetievo.Sunab',
+               'St.Petersberg, Pulkovo': 'St.Petersberg, Pulkovo'}
 
 def click_event():
     global my_rases
     global all_rases
     global yscroll
     global db_helper
-    print("click")
     db_helper = DBhelper()
     prev_all_rases = db_helper.get("rase")
-    print(time_away.get())
-    print(city_from.get(city_from.curselection()))
-    print(city_to.get(city_to.curselection()))
-    print(company.get())
-    print(plane.get())
     t_away = time_away.get()
-    c_from = city_from.get(city_from.curselection())
-    c_to = city_to.get(city_to.curselection())
+    c_from = city_mapper[city_from.get(city_from.curselection())]
+    c_to = city_mapper[city_to.get(city_to.curselection())]
     com = company.get()
     pl = plane.get()
     main(t_away, c_from, c_to, com, pl)
@@ -31,7 +27,6 @@ def click_event():
 
     db_helper = DBhelper()
     my_rases = db_helper.get("rase")
-    print(my_rases)
     i = 0
     while i < len(my_rases) - 1:
         item_rase = []
@@ -55,8 +50,8 @@ def click_event():
 
 root = tk.Tk()
 tk.Label(root, text="Время вылета", relief=tk.RIDGE, anchor='s', width=12).grid(row=0)
-tk.Label(root, text="Точка вылета", relief=tk.RIDGE, anchor='s', width=12).grid(row=1)
-tk.Label(root, text="Точка прилета", relief=tk.RIDGE, anchor='s', width=12).grid(row=2)
+tk.Label(root, text="Пункт вылета", relief=tk.RIDGE, anchor='s', width=12).grid(row=1)
+tk.Label(root, text="Пункт прилета", relief=tk.RIDGE, anchor='s', width=12).grid(row=2)
 tk.Label(root, text="Компания", relief=tk.RIDGE, anchor='s', width=12).grid(row=3)
 tk.Label(root, text="Самолет", relief=tk.RIDGE, anchor='s', width=12).grid(row=4)
 tk.Label(root, text="Рейсы", relief=tk.RIDGE, anchor='s', width=12).grid(row=6)
@@ -77,14 +72,12 @@ plane.grid(row=4, column=1)
 b1 = tk.Button(root, text='Добавить', command=click_event)
 b1.grid(row=5, column=1)
 
-
-
-for item in ["St.Petersberg, Pulkovo", "Moscow, Sheremetyevo"]:
+for item in ["St.Petersberg, Pulkovo", "Moscow, Sheremetievo"]:
     city_from.insert(tk.END, item)
 
 city_to = tk.Listbox(root, width=50, height=2, exportselection=0)
 city_to.grid(row=2, column=1)
-for item in ["St.Petersberg, Pulkovo", "Moscow, Sheremetyevo"]:
+for item in ["St.Petersberg, Pulkovo", "Moscow, Sheremetievo"]:
     city_to.insert(tk.END, item)
 
 all_rases = tk.Listbox(root, width=90, height=10)

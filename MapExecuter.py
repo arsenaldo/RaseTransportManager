@@ -12,7 +12,6 @@ class MapExecuter(DBhelper):
         super(MapExecuter, self).__init__()
 
     def execute_by_route(self, route):
-        print("BRRREEEEE")
         my_list = []
         try:
             with self.connection.cursor() as cursor:
